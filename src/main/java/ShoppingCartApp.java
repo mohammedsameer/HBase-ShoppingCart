@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -45,8 +46,24 @@ public class ShoppingCartApp {
        } else if(args.length == 1 && args[0].equalsIgnoreCase("delete")) {
            System.out.println("Deleting tables");
            deleteTable(inventoryDao, shoppingCartDao);
+       } else if (args.length == 1 && args[0].equalsIgnoreCase("reset")) {
+           System.out.println("Resetting tables");
+           resetTables(conf);
        }
    }
+
+    /**
+     * Reset hbase tables
+     * @param conf configuration
+     */
+    private static void resetTables(Configuration conf) throws IOException {
+        HBaseAdmin admin = new HBaseAdmin(conf);
+
+        admin.deleteTable(InventoryDao.TABLE_NAME);
+        admin.deleteTable(ShoppingCartDao.TABLE_NAME);
+
+        admin.close();
+    }
 
     /**
      * Delete inventory and shopping cart table
@@ -60,7 +77,6 @@ public class ShoppingCartApp {
         shoppingCartDao.deleteShoppingCart();
         System.out.printf("Done");
     }
-
 
     /**
      * Check out shopping cart
@@ -147,6 +163,11 @@ public class ShoppingCartApp {
         inventoryDao.addInventory("notebooks", 30);
     }
 
+    /**
+     * Create tables
+     * @param conf configuration
+     * @throws IOException
+     */
     private static void createTables(Configuration conf) throws IOException {
         HBaseAdmin admin = new HBaseAdmin(conf);
         //Create  Inventory table
@@ -172,6 +193,7 @@ public class ShoppingCartApp {
             HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
             HColumnDescriptor columnDescriptor = new HColumnDescriptor(columnFamily);
             columnDescriptor.setMaxVersions(versions);
+            columnDescriptor.setCompressionType(Compression.Algorithm.LZ4);
             descriptor.addFamily(columnDescriptor);
             admin.createTable(descriptor);
             System.out.println(Bytes.toString(tableName) + " table created!");
