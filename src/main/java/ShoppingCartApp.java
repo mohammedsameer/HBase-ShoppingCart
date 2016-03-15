@@ -59,7 +59,10 @@ public class ShoppingCartApp {
     private static void resetTables(Configuration conf) throws IOException {
         HBaseAdmin admin = new HBaseAdmin(conf);
 
+        admin.disableTable(InventoryDao.TABLE_NAME);
         admin.deleteTable(InventoryDao.TABLE_NAME);
+
+        admin.disableTable(ShoppingCartDao.TABLE_NAME);
         admin.deleteTable(ShoppingCartDao.TABLE_NAME);
 
         admin.close();
